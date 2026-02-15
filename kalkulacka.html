@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kalkulačka m³ / m²</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Manrope:wght@400;600;700&display=swap');
+
+    :root {
+      --bg-top: #f3f7ff;
+      --bg-bottom: #edf7ee;
+      --card-bg: rgba(255, 255, 255, 0.86);
+      --line: rgba(20, 42, 90, 0.12);
+      --text: #172034;
+      --muted: #5f6b84;
+      --accent: #1768ff;
+      --accent-soft: #d8e7ff;
+      --success: #14844a;
+      --success-soft: #dff6e8;
+      --shadow: 0 24px 70px rgba(17, 42, 93, 0.14);
+      --radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'Manrope', 'Trebuchet MS', sans-serif;
+      color: var(--text);
+      background: linear-gradient(160deg, var(--bg-top), var(--bg-bottom));
+      display: grid;
+      place-items: center;
+      padding: 28px 16px;
+      overflow-x: hidden;
+    }
+
+    body::before,
+    body::after {
+      content: '';
+      position: fixed;
+      width: 320px;
+      height: 320px;
+      border-radius: 50%;
+      z-index: -1;
+      filter: blur(12px);
+    }
+
+    body::before {
+      top: -110px;
+      right: -90px;
+      background: radial-gradient(circle, #cde0ff 0%, rgba(205, 224, 255, 0) 72%);
+    }
+
+    body::after {
+      bottom: -130px;
+      left: -100px;
+      background: radial-gradient(circle, #d7f0de 0%, rgba(215, 240, 222, 0) 74%);
+    }
+
+    .app {
+      width: min(100%, 560px);
+      background: var(--card-bg);
+      border: 1px solid var(--line);
+      border-radius: calc(var(--radius) + 4px);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      padding: clamp(18px, 3vw, 28px);
+      animation: fade-in 420ms ease-out both;
+    }
+
+    .eyebrow {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #e9f0ff;
+      color: #1e4dbf;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 12px 0 8px;
+      font-family: 'Sora', 'Trebuchet MS', sans-serif;
+      font-size: clamp(1.4rem, 2.6vw, 1.9rem);
+      line-height: 1.2;
+    }
+
+    .subtitle {
+      margin: 0 0 18px;
+      color: var(--muted);
+      font-size: 0.97rem;
+    }
+
+    .input-block {
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+
+    .input-wrap {
+      position: relative;
+    }
+
+    input {
+      width: 100%;
+      border: 1px solid #cdd7eb;
+      border-radius: 14px;
+      background: #ffffff;
+      color: var(--text);
+      font-size: 1.1rem;
+      font-weight: 600;
+      padding: 13px 52px;
+      text-align: center;
+      outline: none;
+      transition: border-color 150ms ease, box-shadow 150ms ease;
+    }
+
+    input:focus {
+      border-color: #6f9dff;
+      box-shadow: 0 0 0 4px var(--accent-soft);
+    }
+
+    .stepper {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 34px;
+      height: 34px;
+      border: 1px solid #c5d4f3;
+      border-radius: 10px;
+      background: #eef4ff;
+      color: #1e4dbf;
+      font-weight: 700;
+      font-size: 1.2rem;
+      line-height: 1;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      transition: background-color 120ms ease, transform 120ms ease, border-color 120ms ease;
+    }
+
+    .stepper:hover {
+      background: #e2edff;
+      border-color: #aac1f0;
+    }
+
+    .stepper:active {
+      transform: translateY(-50%) scale(0.96);
+    }
+
+    .stepper-minus {
+      left: 9px;
+    }
+
+    .stepper-plus {
+      right: 9px;
+    }
+
+    .step-note {
+      margin: 8px 2px 0;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .result {
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: #ffffff;
+      padding: 14px 16px;
+      transition: transform 150ms ease, box-shadow 150ms ease;
+    }
+
+    .result.recalc {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 20px rgba(26, 49, 94, 0.09);
+    }
+
+    .result-label {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.86rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    .result-value {
+      margin-top: 6px;
+      font-family: 'Sora', 'Trebuchet MS', sans-serif;
+      font-size: clamp(1.2rem, 2.8vw, 1.5rem);
+      font-weight: 700;
+    }
+
+    .result.vat {
+      border-color: rgba(20, 132, 74, 0.28);
+      background: var(--success-soft);
+    }
+
+    .footnote {
+      margin: 14px 2px 0;
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+
+    @keyframes fade-in {
+      from {
+        opacity: 0;
+        transform: translateY(14px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 520px) {
+      body {
+        padding: 16px 12px;
+      }
+
+      .app {
+        padding: 16px;
+        border-radius: 16px;
+      }
+
+      .result {
+        padding: 12px 13px;
+      }
+
+      .result-value {
+        font-size: 1.22rem;
+      }
+
+      .stepper {
+        width: 32px;
+        height: 32px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app" aria-label="Kalkulačka m³ / m²">
+    <span class="eyebrow">Kalkulačka</span>
+    <h1>Přepočet na cenu</h1>
+    <p class="subtitle">Zadejte objem nebo plochu a okamžitě uvidíte částku bez DPH i s DPH 21 %.</p>
+
+    <!-- m³ sekce -->
+    <section class="input-block">
+      <label for="m3">Velikost v m³</label>
+      <div class="input-wrap">
+        <button class="stepper stepper-minus" id="minus-m3" type="button" aria-label="Odečíst 10 m³">−</button>
+        <input id="m3" type="text" inputmode="decimal" placeholder="Např. 2,5" autocomplete="off" />
+        <button class="stepper stepper-plus" id="plus-m3" type="button" aria-label="Přičíst 10 m³">+</button>
+      </div>
+      <p class="step-note">Ikony +/− mění objem po 10 m³.</p>
+    </section>
+
+    <section class="grid" aria-live="polite">
+      <article class="result" id="result-net-card">
+        <p class="result-label">Výsledek bez DPH</p>
+        <div class="result-value" id="result-net">0 Kč</div>
+      </article>
+      <article class="result vat" id="result-vat-card">
+        <p class="result-label">DPH + 21 %</p>
+        <div class="result-value" id="result-vat">0 Kč</div>
+      </article>
+    </section>
+
+    <p class="footnote">Kurz: 1 m³ = 9 775 Kč</p>
+
+    <hr style="border: none; border-top: 1px solid var(--line); margin: 24px 0;" />
+
+    <!-- m² sekce -->
+    <section class="input-block">
+      <label for="m2">Velikost v m²</label>
+      <div class="input-wrap">
+        <button class="stepper stepper-minus" id="minus-m2" type="button" aria-label="Odečíst 10 m²">−</button>
+        <input id="m2" type="text" inputmode="decimal" placeholder="Např. 2,5" autocomplete="off" />
+        <button class="stepper stepper-plus" id="plus-m2" type="button" aria-label="Přičíst 10 m²">+</button>
+      </div>
+      <p class="step-note">Ikony +/− mění plochu po 10 m².</p>
+    </section>
+
+    <section class="grid" aria-live="polite">
+      <article class="result" id="result-net-card-m2">
+        <p class="result-label">Výsledek bez DPH</p>
+        <div class="result-value" id="result-net-m2">0 Kč</div>
+      </article>
+      <article class="result vat" id="result-vat-card-m2">
+        <p class="result-label">DPH + 21 %</p>
+        <div class="result-value" id="result-vat-m2">0 Kč</div>
+      </article>
+    </section>
+
+    <p class="footnote">Kurz: 1 m² = 34 000 Kč</p>
+  </main>
+
+  <script>
+    const RATE_M3 = 9775;
+    const RATE_M2 = 34000;
+    const VAT_MULTIPLIER = 1.21;
+    const STEP = 10;
+    const formatCurrency = new Intl.NumberFormat('cs-CZ', {
+      style: 'currency',
+      currency: 'CZK',
+      maximumFractionDigits: 2
+    });
+
+    function parseValue(value) {
+      const normalized = value.replace(/\s+/g, '').replace(',', '.').trim();
+      const parsed = Number(normalized);
+      if (Number.isNaN(parsed) || parsed < 0) {
+        return 0;
+      }
+      return parsed;
+    }
+
+    function formatValue(value) {
+      const rounded = Math.round(value * 100) / 100;
+      if (Number.isInteger(rounded)) {
+        return String(rounded);
+      }
+      return String(rounded).replace('.', ',');
+    }
+
+    function pulseResult(card) {
+      card.classList.remove('recalc');
+      requestAnimationFrame(() => {
+        card.classList.add('recalc');
+      });
+    }
+
+    function setupCalc(inputId, minusId, plusId, netId, vatId, netCardId, vatCardId, rate) {
+      const input = document.getElementById(inputId);
+      const resultNet = document.getElementById(netId);
+      const resultVat = document.getElementById(vatId);
+      const netCard = document.getElementById(netCardId);
+      const vatCard = document.getElementById(vatCardId);
+
+      function update() {
+        const val = parseValue(input.value);
+        const totalWithoutVat = val * rate;
+        const totalWithVat = totalWithoutVat * VAT_MULTIPLIER;
+        resultNet.textContent = formatCurrency.format(totalWithoutVat);
+        resultVat.textContent = formatCurrency.format(totalWithVat);
+        pulseResult(netCard);
+        pulseResult(vatCard);
+      }
+
+      function adjust(delta) {
+        const nextValue = Math.max(0, parseValue(input.value) + delta);
+        input.value = formatValue(nextValue);
+        update();
+      }
+
+      input.addEventListener('input', update);
+      document.getElementById(minusId).addEventListener('click', () => adjust(-STEP));
+      document.getElementById(plusId).addEventListener('click', () => adjust(STEP));
+      update();
+    }
+
+    setupCalc('m3', 'minus-m3', 'plus-m3', 'result-net', 'result-vat', 'result-net-card', 'result-vat-card', RATE_M3);
+    setupCalc('m2', 'minus-m2', 'plus-m2', 'result-net-m2', 'result-vat-m2', 'result-net-card-m2', 'result-vat-card-m2', RATE_M2);
+  </script>
+</body>
+</html>
